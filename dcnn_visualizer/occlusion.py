@@ -10,6 +10,7 @@ from warnings import warn
 
 import numpy
 import dcnn_visualizer.tools as tools
+from dcnn_visualizer.visualizer import ActivationVisualizer
 from dcnn_visualizer.roi import DeformableROIIterator
 import matplotlib.cm
 from PIL import Image
@@ -104,6 +105,7 @@ class SaliencyMap:
         Blend a heatmap into the image.
 
         Args:
+pyTextureSynth
             img (numpy.ndarray): image to visualize the saliency which has a shape like (h, w, c)
             alpha (float): alpha value for alpha blending of the image and its saliency heatmap
             cmap (str): the name of colormap definition in matplotlib.cm
@@ -128,23 +130,10 @@ class SaliencyMap:
         return numpy.asarray(visualized_pil)
 
 
-class SaliencyVisualizer:
+class SaliencyVisualizer(ActivationVisualizer):
     """
     Visualizer of network occlusion saliency.
-
-    Args:
-        model (chainer.Link): network to visualize an activation
-        forward_func (function(numpy.ndarray, str) -> (numpy.ndarray)): model has no `forward` attribute, this will be
-            used as an alternative to model.forward
     """
-
-    def __init__(self, model, forward_func=None):
-        self.model = model
-
-        if hasattr(model, 'forward') and callable(model.forward):
-            self.forward = lambda img, layer, args: model.forward(img, layer, *args)
-        else:
-            self.forward = lambda img, layer, args: forward_func(img, layer, *args)
 
     # noinspection PyTypeChecker
     def analyze(self, img, layer, ksize, stride=1, *forward_arg, **forward_opt):
@@ -152,6 +141,7 @@ class SaliencyVisualizer:
         Make a Saliency map of specified filter.
 
         Args:
+
             img (numpy.ndarray): An image we want to see a saliency (c, w, h)
             layer (str): Layer name of target layer; This must be meaningful for forward function.
             ksize (int): A size of occluding kernel in input image
