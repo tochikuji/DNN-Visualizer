@@ -148,3 +148,35 @@ class DeSaliNet(BackwardNetBase):
             return bf.relu(bf.inverse_relu_anew(node, traced, raw))
         elif isinstance(node, tn.TraceableLinear):
             return bf.inverse_linear(node, traced, raw)
+
+
+if __name__ == '__main__':
+    import chainer
+    import numpy as np
+
+    class SimpleCNN(TraceableChain):
+        def __init__(self):
+            super().__init__()
+
+            with self.init_scope():
+                self.conv1 = tn.TraceableConvolution2D(3, 10, 3)
+                self.conv1_relu = tn.TraceableReLU()
+                self.conv1_mp = tn.TraceableMaxPooling2D(ksize=2)
+
+                self.conv2 = tn.TraceableConvolution2D(10, 5, 3)
+                self.conv2_relu = tn.TraceableReLU()
+                self.conv2_mp = tn.TraceableMaxPooling2D(ksize=2)
+
+                self.fc3 = tn.TraceableLinear(None, 32)
+                self.fc3_relu = tn.TraceableReLU()
+
+                self.fc4 = tn.TraceableLinear(None, 10)
+                self.fc4_relu = tn.TraceableReLU()
+
+
+    model = SimpleCNN()
+
+    img = np.random.rand(1, 3, 28, 28).astype('f')
+
+    visualizer = DeSaliNet(model)
+    visualizer.analyze(img, 'conv2')

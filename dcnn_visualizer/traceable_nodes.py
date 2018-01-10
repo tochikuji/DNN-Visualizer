@@ -21,7 +21,7 @@ class TraceableFunctionWrapper(TraceableNode):
         self.opt = opt
 
     def __call__(self, x):
-        return self._func(x, *args, **opt)
+        return self._func(x, *self.args, **self.opt)
 
 
 class TraceableConvolution2D(L.Convolution2D, TraceableNode):
@@ -38,7 +38,7 @@ class TraceableLinear(L.Linear, TraceableNode):
 
 class TraceableMaxPooling2D(TraceableFunctionWrapper):
     def __init__(self, ksize, stride=None, pad=0, cover_all=True, *args, **opt):
-        super().__init__(args, opt)
+        super().__init__(*args, **opt)
 
         self._func = F.max_pooling_2d
         self.traceable_node_type = 'MP'
@@ -48,10 +48,13 @@ class TraceableMaxPooling2D(TraceableFunctionWrapper):
         self.pad = pad
         self.cover_all = cover_all
 
+    def __call__(self, x, *args, **opt):
+        return self._func(x, ksize=self.ksize, stride=self.stride, pad=self.pad, cover_all=self.cover_all)
+
 
 class TraceableReLU(TraceableFunctionWrapper):
     def __init__(self, *args, **opt):
-        super().__init__(args, opt)
+        super().__init__(*args, **opt)
 
         self._func = F.relu
         self.traceable_node_type = 'RELU'
