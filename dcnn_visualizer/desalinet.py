@@ -94,7 +94,8 @@ class BackwardNetBase(ActivationVisualizer, metaclass=ABCMeta):
                                                                  previous_activation)
             else:
                 if verbose:
-                    print(f'Named layer {layer} was ignored. It is not an instance of TraceableNode.')
+                    print(f'Named layer {current_attention_layer_name} has been ignored. '
+                          'It is not an instance of TraceableNode.')
 
             current_index -= 1
 
@@ -159,7 +160,8 @@ class DeSaliNet(BackwardNetBase):
 
 
 if __name__ == '__main__':
-    import chainer
+    import chainer.functions as F
+    import chainer.links as L
     import numpy as np
 
     class SimpleCNN(TraceableChain):
@@ -170,6 +172,7 @@ if __name__ == '__main__':
                 self.conv1 = tn.TraceableConvolution2D(3, 10, 3)
                 self.conv1_relu = tn.TraceableReLU()
                 self.conv1_mp = tn.TraceableMaxPooling2D(ksize=2)
+                self.conv1_bn = F.local_response_normalization
 
                 self.conv2 = tn.TraceableConvolution2D(10, 5, 3)
                 self.conv2_relu = tn.TraceableReLU()
