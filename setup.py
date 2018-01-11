@@ -8,5 +8,5 @@ setup(
     license='',
     author='Aiga SUZUKI',
     author_email='tochikuji@gmail.com',
-    description=''
+    description='', requires=['numpy', 'chainer', 'chainercv']
 )

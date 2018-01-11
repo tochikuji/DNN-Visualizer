@@ -25,7 +25,7 @@ class TraceableChain(PickableSequentialChain):
 if __name__ == '__main__':
     import chainer.functions as F
     import numpy
-    from traceable_nodes import TraceableLinear
+    from dcnn_visualizer.traceable_nodes import TraceableLinear
 
     class TraceableModel(TraceableChain):
         def __init__(self):
@@ -43,6 +43,7 @@ if __name__ == '__main__':
     model = TraceableModel()
 
     x = numpy.random.rand(1, 10).astype('f')
+    # noinspection PyTypeChecker
     v = model(x)
 
     print({model.layer_names[i]: y for i, y in enumerate(v)})

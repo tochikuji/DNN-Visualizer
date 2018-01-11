@@ -21,16 +21,16 @@ that has no recursions, bypasses or something strange connections.
 """
 
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
-from dcnn_visualizer.visualizer import ActivationVisualizer
-from dcnn_visualizer.optype import OpType, BackwardType
+import numpy
 
 from dcnn_visualizer.traceable_chain import TraceableChain
 import dcnn_visualizer.traceable_nodes as tn
 import dcnn_visualizer.backward_functions as bf
 
-class BackwardNetBase(ActivationVisualizer, metaclass=ABCMeta):
+
+class BackwardNetBase(metaclass=ABCMeta):
     """
     Base class of backward-oriented activation visualizers (i.e. DeconvNet, SaliNet and DeSaliNet [1])
     """
@@ -140,6 +140,7 @@ class SaliNet(BackwardNetBase):
         elif isinstance(node, tn.TraceableLinear):
             return bf.inverse_linear(node, traced, raw)
 
+
 class DeSaliNet(BackwardNetBase):
     def __init__(self, model, locational_pooling=True):
         super().__init__(model)
@@ -161,7 +162,6 @@ class DeSaliNet(BackwardNetBase):
 
 if __name__ == '__main__':
     import chainer.functions as F
-    import chainer.links as L
     import numpy as np
 
     class SimpleCNN(TraceableChain):

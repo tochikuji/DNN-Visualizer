@@ -4,9 +4,9 @@ import contextlib
 
 @contextlib.contextmanager
 def expect_ndarray(x):
-    try:
-        is_raveled = False
+    is_raveled = False
 
+    try:
         if isinstance(x, chainer.Variable):
             x = x.data
             is_raveled = True

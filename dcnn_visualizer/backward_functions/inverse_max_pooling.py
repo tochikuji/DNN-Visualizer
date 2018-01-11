@@ -75,6 +75,7 @@ def __center(x0, y0, x1, y1):
 
 def __max_location(receptive_field_raw_):
     with expect_ndarray(receptive_field_raw_) as receptive_field_raw:
-        max_locations = [numpy.argwhere(c== c.max())[0] for c in receptive_field_raw]
+        # noinspection PyTypeChecker
+        max_locations = [numpy.argwhere(c == c.max())[0] for c in receptive_field_raw]
 
     return tuple([loc.tolist() for loc in max_locations])
