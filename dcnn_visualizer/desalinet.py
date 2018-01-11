@@ -4,6 +4,10 @@ and Simonyan's Network saliency (SaliNet)[3] as a special case.
 This method is based on the back-propagation of the network activation similar to Zeiler's one.
 DeSaliNet has a explicitness on its visualization result, but sometimes provide a propitious visualization to excess.
 
+All of these methods requires that the network should be a "sequential",
+that has no recursions, bypasses or something strange connections.
+(e.g. LeNet, AlexNet, VGG. Not GoogLeNet, ResNet etc...)
+
 [References]
 [1] Mahendran, Aravindh, and Andrea Vedaldi. "Salient deconvolutional networks."
     European Conference on Computer Vision. Springer International Publishing, 2016.
@@ -22,72 +26,168 @@ from abc import ABCMeta, abstractmethod
 from dcnn_visualizer.visualizer import ActivationVisualizer
 from dcnn_visualizer.optype import OpType, BackwardType
 
+from dcnn_visualizer.traceable_chain import TraceableChain
+import dcnn_visualizer.traceable_nodes as tn
+import dcnn_visualizer.backward_functions as bf
 
 class BackwardNetBase(ActivationVisualizer, metaclass=ABCMeta):
     """
     Base class of backward-oriented activation visualizers (i.e. DeconvNet, SaliNet and DeSaliNet [1])
     """
-    def __init__(self, model, forward_func=None, opchain=None):
+    def __init__(self, model: TraceableChain):
         """
+
         Args:
-            model: model to visualize the activation
-            forward_func: altenative to model.forward
-            op_chain (OpChain):
+            model:
         """
 
-        super().__init__(model, forward_func)
+        if not isinstance(model, TraceableChain):
+            raise TypeError('the model must be an instance of TraceableChain.')
 
-        if opchain is None:
-            raise ValueError('Operation chain is needed.')
+        self.model = model
+        self.layers = model.layer_names
+
+    def inverse_traceable_node(self, node, traced, raw):
+        raise NotImplementedError()
+
+    def analyze(self, img, layer, index=None, verbose=False):
+        # validate layer's name
+        if layer not in self.layers:
+            raise ValueError(f'specified layer "{layer}" is not pickable in the model.')
+
+        # check whether the input is in a minibatch
+        if len(img.shape) != 4:
+            img = numpy.array([img])
+
+        activations = self.model(img)
+        # activations = {name: act for name, act in zip(self.layers, props)}
+
+        start_index = 0
+        for layername in self.layers:
+            if layer == layername:
+                break
+            else:
+                start_index += 1
+
+        if index is None:
+            start_activation = activations[start_index]
         else:
-            self.opchain = opchain
+            start_activation = np.zeros_like(activations[start_index]).astype('f')
+            start_activation[:, index] = activations[start_index][:, index].data
 
-        self.opchain.set_forward(self.forward)
+        current_index = start_index
+        current_activation = start_activation
 
-        # set an attribute
-        # TODO: make it an abstract class
-        self.backward_type = {}
+        # backward propagation loop
+        while True:
+            current_attention_layer_name = self.layers[current_index]
+            current_attention_layer = getattr(self.model, current_attention_layer_name)
 
-    def analyze(self, img, layer, index=None, *forward_arg):
-        # validate whether the layer name was linked with opchain layer
-        if not self.opchain.haslayer(layer):
-            raise NameError('operation chain has no layer {}'.format(layer))
+            if current_index == 0:
+                previous_activation = img
+            else:
+                previous_activation = activations[current_index - 1]
 
-        # result of the forward propagation
-        # but each bottleneck information have not calculated yet,
-        activation = self.forward(img, layer, *forward_arg)
+            if isinstance(current_attention_layer, tn.TraceableNode):
+                current_activation = self.inverse_traceable_node(current_attention_layer,
+                                                                 current_activation,
+                                                                 previous_activation)
+            else:
+                if verbose:
+                    print(f'Named layer {layer} was ignored. It is not an instance of TraceableNode.')
 
-        for layername, layertype in self.opchain.chain:
-            if layertype == OpType.CONV:
+            current_index -= 1
+
+            if current_index < 0:
+                break
+
+            # check shape of current_activation
+            if current_activation.shape != activations[current_index].shape:
+                raise ValueError('Shape of forward and backward were mismatched. '
+                                 f'forward: {activations[current_index].shape}, '
+                                 f'backward: {current_activation.shape}')
+
+        return current_activation
 
 
 class DeconvNet(BackwardNetBase):
-    def __init__(self, model, forward_func=None, opchain=None):
-        super().__init__(model, forward_func, opchain)
+    def __init__(self, model):
+        super().__init__(model)
 
-        self.opchain.backward_type = {
-            OpType.CONV: BackwardType.CONV_DEFAULT,
-            OpType.MP: BackwardType.MP_LOCATIONAL,
-            OpType.RELU: BackwardType.RELU_ANEW,
-            OpType.AFFINE: BackwardType.AFFINE_TRANSPOSE
-        }
+    def inverse_traceable_node(self, node, traced, raw):
+        if isinstance(node, tn.TraceableConvolution2D):
+            return bf.deconvolution2d(node, traced, raw)
+        elif isinstance(node, tn.TraceableMaxPooling2D):
+            return bf.max_unpooling_locational(node, traced, raw)
+        elif isinstance(node, tn.TraceableReLU):
+            return bf.inverse_relu_anew(node, traced, raw)
+        elif isinstance(node, tn.TraceableLinear):
+            return bf.inverse_linear(node, traced, raw)
+
 
 class SaliNet(BackwardNetBase):
-    super().__init__(model, forward_func, opchain)
+    def __init__(self, model):
+        super().__init__(model)
 
-    self.opchain.backward_type = {
-        OpType.CONV: BackwardType.CONV_DEFAULT,
-        OpType.MP: BackwardType.MP_NON_LOCATIONAL,
-        OpType.RELU: BackwardType.RELU_LOCATIONAL,
-        OpType.AFFINE: BackwardType.AFFINE_TRANSPOSE
-    }
+    def inverse_traceable_node(self, node, traced, raw):
+        if isinstance(node, tn.TraceableConvolution2D):
+            return bf.deconvolution2d(node, traced, raw)
+        elif isinstance(node, tn.TraceableMaxPooling2D):
+            return bf.max_unpooling_non_locational(node, traced, raw)
+        elif isinstance(node, tn.TraceableReLU):
+            return bf.inverse_relu_locational(node, traced, raw)
+        elif isinstance(node, tn.TraceableLinear):
+            return bf.inverse_linear(node, traced, raw)
 
 class DeSaliNet(BackwardNetBase):
-    super().__init__(model, forward_func, opchain)
+    def __init__(self, model, locational_pooling=True):
+        super().__init__(model)
+        if locational_pooling:
+            self.unpooling_fun = bf.max_unpooling_locational
+        else:
+            self.unpooling_fun = bf.max_unpooling_non_locational
 
-    self.opchain.backward_type = {
-        OpType.CONV: BackwardType.CONV_DEFAULT,
-        OpType.MP: BackwardType.MP_LOCATIONAL,
-        OpType.RELU: BackwardType.RELU_LOCATIONAL,
-        OpType.AFFINE: BackwardType.AFFINE_TRANSPOSE
-    }
+    def inverse_traceable_node(self, node, traced, raw):
+        if isinstance(node, tn.TraceableConvolution2D):
+            return bf.deconvolution2d(node, traced, raw)
+        elif isinstance(node, tn.TraceableMaxPooling2D):
+            return self.unpooling_fun(node, traced, raw)
+        elif isinstance(node, tn.TraceableReLU):
+            return bf.relu(bf.inverse_relu_anew(node, traced, raw))
+        elif isinstance(node, tn.TraceableLinear):
+            return bf.inverse_linear(node, traced, raw)
+
+
+if __name__ == '__main__':
+    import chainer
+    import numpy as np
+
+    class SimpleCNN(TraceableChain):
+        def __init__(self):
+            super().__init__()
+
+            with self.init_scope():
+                self.conv1 = tn.TraceableConvolution2D(3, 10, 3)
+                self.conv1_relu = tn.TraceableReLU()
+                self.conv1_mp = tn.TraceableMaxPooling2D(ksize=2)
+
+                self.conv2 = tn.TraceableConvolution2D(10, 5, 3)
+                self.conv2_relu = tn.TraceableReLU()
+                self.conv2_mp = tn.TraceableMaxPooling2D(ksize=2)
+
+                self.fc3 = tn.TraceableLinear(None, 32)
+                self.fc3_relu = tn.TraceableReLU()
+
+                self.fc4 = tn.TraceableLinear(None, 10)
+                self.fc4_relu = tn.TraceableReLU()
+
+
+    model = SimpleCNN()
+
+    img = np.random.rand(1, 3, 28, 28).astype('f')
+
+    visualizer = DeSaliNet(model)
+    visualized_whole = visualizer.analyze(img, 'fc3', verbose=True)
+    visualized_filter = visualizer.analyze(img, 'conv2', 1, verbose=True)
+    print(visualized_whole.shape)
+    print(visualized_filter.shape)

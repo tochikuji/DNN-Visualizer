@@ -1,0 +1,5 @@
+from dcnn_visualizer.backward_functions.inverse_convolution2d import deconvolution2d
+from dcnn_visualizer.backward_functions.inverse_linear import inverse_linear
+from dcnn_visualizer.backward_functions.inverse_max_pooling \
+    import max_unpooling_diffusional, max_unpooling_non_locational, max_unpooling_locational
+from dcnn_visualizer.backward_functions.inverse_relu import inverse_relu_anew, inverse_relu_locational, relu
