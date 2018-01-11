@@ -47,6 +47,9 @@ class BackwardNetBase(metaclass=ABCMeta):
         self.model = model
         self.layers = model.layer_names
 
+        self._previous_activations = None
+        self._previous_input = None
+
     def inverse_traceable_node(self, node, traced, raw):
         raise NotImplementedError()
 
@@ -57,10 +60,18 @@ class BackwardNetBase(metaclass=ABCMeta):
 
         # check whether the input is in a minibatch
         if len(img.shape) != 4:
-            img = numpy.array([img])
+            img_ = numpy.array([img])
+        else:
+            img_ = numpy.array(img)
 
-        activations = self.model(img)
-        # activations = {name: act for name, act in zip(self.layers, props)}
+        if self._previous_activations is None or img is not self._previous_input:
+            activations = self.model(img_)
+            self._previous_activations = activations
+            self._previous_input = img
+        else:
+            activations = self._previous_activations
+            if verbose:
+                print('forward propagation has been cached.')
 
         start_index = 0
         for layername in self.layers:
@@ -84,7 +95,7 @@ class BackwardNetBase(metaclass=ABCMeta):
             current_attention_layer = getattr(self.model, current_attention_layer_name)
 
             if current_index == 0:
-                previous_activation = img
+                previous_activation = img_
             else:
                 previous_activation = activations[current_index - 1]
 

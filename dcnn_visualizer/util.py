@@ -25,4 +25,3 @@ if __name__ == '__main__':
 
     with expect_ndarray(v) as data:
         data[0] = data.max()
-
