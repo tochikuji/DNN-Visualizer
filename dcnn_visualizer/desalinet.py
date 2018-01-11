@@ -72,7 +72,7 @@ class BackwardNetBase(metaclass=ABCMeta):
         if index is None:
             start_activation = activations[start_index]
         else:
-            start_activation = np.zeros_like(activations[start_index]).astype('f')
+            start_activation = numpy.zeros_like(activations[start_index]).astype('f')
             start_activation[:, index] = activations[start_index][:, index].data
 
         current_index = start_index
