@@ -44,7 +44,10 @@ class TraceableMaxPooling2D(TraceableFunctionWrapper):
         self.traceable_node_type = 'MP'
 
         self.ksize = ksize
-        self.stride = stride
+        if stride is not None:
+            self.stride = stride
+        else:
+            self.stride = ksize
         self.pad = pad
         self.cover_all = cover_all
 
