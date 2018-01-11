@@ -69,8 +69,14 @@ class BackwardNetBase(ActivationVisualizer, metaclass=ABCMeta):
             else:
                 start_index += 1
 
+        if index is None:
+            start_activation = activations[start_index]
+        else:
+            start_activation = np.zeros_like(activations[start_index]).astype('f')
+            start_activation[:, index] = activations[start_index][:, index].data
+
         current_index = start_index
-        current_activation = activations[current_index]
+        current_activation = start_activation
 
         # backward propagation loop
         while True:
@@ -181,6 +187,7 @@ if __name__ == '__main__':
     img = np.random.rand(1, 3, 28, 28).astype('f')
 
     visualizer = DeSaliNet(model)
-    visualized = visualizer.analyze(img, 'conv2')
-    print(visualized.shape)
-    print(visualized)
+    visualized_whole = visualizer.analyze(img, 'fc3', verbose=True)
+    visualized_filter = visualizer.analyze(img, 'conv2', 1, verbose=True)
+    print(visualized_whole.shape)
+    print(visualized_filter.shape)
