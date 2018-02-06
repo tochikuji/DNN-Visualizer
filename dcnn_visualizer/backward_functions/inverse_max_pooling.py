@@ -52,7 +52,7 @@ def __sparse_max_unpooling_inner(node, pooled_, raw_, is_positional):
             else:
                 # is not positional
                 px, py = __center(x0, y0, x1, y1)
-                unpooled[:, y0 + py, x0 + px] = pooled[:, pooled_y, pooled_x]
+                unpooled[:, py,  px] = pooled[:, pooled_y, pooled_x]
 
     return unpooled
 
@@ -70,7 +70,7 @@ def max_unpooling_diffusional(node, pooled, raw):
 
 
 def __center(x0, y0, x1, y1):
-    return int((x0 + x1) / 2), int((y0 + y1) / 2)
+    return (x0 + x1) // 2, (y0 + y1) // 2
 
 
 def __max_location(receptive_field_raw_):

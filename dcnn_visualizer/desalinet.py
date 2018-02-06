@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     img = np.random.rand(1, 3, 28, 28).astype('f')
 
-    visualizer = DeSaliNet(model)
+    visualizer = SaliNet(model)
     visualized_whole = visualizer.analyze(img, 'fc3', verbose=True)
     visualized_filter = visualizer.analyze(img, 'conv2', 1, verbose=True)
     print(visualized_whole.shape)
