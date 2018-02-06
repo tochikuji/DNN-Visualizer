@@ -1,8 +1,8 @@
 """
-Activation visualizer based on activation saliency with an local occlusion.
-This method sees the fluctuation of an neuronal activation (feature map) magnitude
+Activation visualizer based on activation saliency with a local occlusion.
+This method sees the fluctuation of  neuronal activation (feature map) magnitude
 by occluding a certain small region in the input images, corresponding to the receptive field.
-This makes an heatmap of a variation of the each neuronal activations came from each local occlusions,
+This visualization method makes a heat map of a variation of each neuronal activations came from each local occlusions,
 which implies a neuronal attentions (localities).
 """
 
@@ -34,11 +34,18 @@ class SaliencyMap:
 
     def heatmap(self, shape=None, cmap='bwr', value_range=None, centering=False, absolute=False):
         """
-        Generate saliency heatmap corresponding to the object location.
-        If you choose a colormap which has a transparency at the center of values,
+        Activation visualizer based on activation saliency with a local occlusion.
+        This method sees the fluctuation of  neuronal activation (feature map) magnitude
+        by occluding a certain small region in the input images, corresponding to the receptive field.
+        This visualization method makes a heat map of a variation of each neuronal activations came
+        from each local occlusions,
+        which implies a neuronal attentions (localities).
+
+        Generate saliency heat map corresponding to the object location.
+        If you choose a colormap which has transparency at the center of values,
 
         Args:
-            shape (array_like): shape of heatmap, defaulting to same size as the saliency tensor
+            shape (array_like): shape of heatmap, defaulting to the same size as the saliency tensor
             cmap (str): the name of colormap definition in matplotlib.cm
             value_range (scalar or 2d_array_like): value range for normalize the saliency
             centering (bool): If True, heatmap will be symmetrized with 0
@@ -105,7 +112,6 @@ class SaliencyMap:
         Blend a heatmap into the image.
 
         Args:
-pyTextureSynth
             img (numpy.ndarray): image to visualize the saliency which has a shape like (h, w, c)
             alpha (float): alpha value for alpha blending of the image and its saliency heatmap
             cmap (str): the name of colormap definition in matplotlib.cm
@@ -138,12 +144,12 @@ class SaliencyVisualizer(ActivationVisualizer):
     # noinspection PyTypeChecker
     def analyze(self, img, layer, ksize, stride=1, *forward_arg, **forward_opt):
         """
-        Make a Saliency map of specified filter.
+        Make a Saliency map of a specified filter.
 
         Args:
 
             img (numpy.ndarray): An image we want to see a saliency (c, w, h)
-            layer (str): Layer name of target layer; This must be meaningful for forward function.
+            layer (str): Layer name of target layer; This must be meaningful for forwarding function.
             ksize (int): A size of occluding kernel in input image
             stride (int): Step size of occlusion i.e. a resolution of saliency analysis
 

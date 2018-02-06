@@ -1,10 +1,10 @@
 """
-Implementation of Machendran's DeSaliNet[1] including Zeiler's deconvolutinal visualizing method (DeconvNet)[2],
+Implementation of Machendran's DeSaliNet[1] including Zeiler's deconvolutional visualizing method (DeconvNet)[2],
 and Simonyan's Network saliency (SaliNet)[3] as a special case.
 This method is based on the back-propagation of the network activation similar to Zeiler's one.
-DeSaliNet has a explicitness on its visualization result, but sometimes provide a propitious visualization to excess.
+DeSaliNet has a explicitness on its visualization result but sometimes provide a propitious visualization to excess.
 
-All of these methods requires that the network should be a "sequential",
+All of these methods require that the network should be a "sequential",
 that has no recursions, bypasses or something strange connections.
 (e.g. LeNet, AlexNet, VGG. Not GoogLeNet, ResNet etc...)
 
