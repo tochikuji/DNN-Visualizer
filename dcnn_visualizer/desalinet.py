@@ -25,12 +25,13 @@ from abc import ABCMeta
 
 import numpy
 
+from dcnn_visualizer.visualizer import ActivationVisualizer
 from dcnn_visualizer.traceable_chain import TraceableChain
 import dcnn_visualizer.traceable_nodes as tn
 import dcnn_visualizer.backward_functions as bf
 
 
-class BackwardNetBase(metaclass=ABCMeta):
+class BackwardNetBase(ActivationVisualizer):
     """
     Base class of backward-oriented activation visualizers (i.e. DeconvNet, SaliNet and DeSaliNet [1])
     """
@@ -40,14 +41,7 @@ class BackwardNetBase(metaclass=ABCMeta):
             model(TraceableChain): model to visualize
         """
 
-        if not isinstance(model, TraceableChain):
-            raise TypeError('the model must be an instance of TraceableChain.')
-
-        self.model = model
-        self.layers = model.layer_names
-
-        self._previous_activations = None
-        self._previous_input = None
+        super().__init__(model)
 
     def inverse_traceable_node(self, node, traced, raw):
         raise NotImplementedError()
@@ -68,24 +62,8 @@ class BackwardNetBase(metaclass=ABCMeta):
             numpy.ndarray: visualization result which has the same shape of input (`img`)
 
         '''
-        # validate layer's name
-        if layer not in self.layers:
-            raise ValueError(f'specified layer "{layer}" is not pickable in the model.')
 
-        # check whether the input is in a minibatch
-        if len(img.shape) != 4:
-            img_ = numpy.array([img])
-        else:
-            img_ = numpy.array(img)
-
-        if self._previous_activations is None or img is not self._previous_input:
-            activations = self.model(img_)
-            self._previous_activations = activations
-            self._previous_input = img
-        else:
-            activations = self._previous_activations
-            if verbose:
-                print('forward propagation has been cached.')
+        super().analyze(img, layer, )
 
         start_index = 0
         for layername in self.layers:
@@ -95,10 +73,10 @@ class BackwardNetBase(metaclass=ABCMeta):
                 start_index += 1
 
         if index is None:
-            start_activation = activations[start_index]
+            start_activation = self.current_activations[start_index]
         else:
-            start_activation = numpy.zeros_like(activations[start_index]).astype('f')
-            start_activation[:, index] = activations[start_index][:, index].data
+            start_activation = numpy.zeros_like(self.current_activations[start_index]).astype('f')
+            start_activation[:, index] = self.current_activations[start_index][:, index].data
 
         current_index = start_index
         current_activation = start_activation
@@ -109,9 +87,9 @@ class BackwardNetBase(metaclass=ABCMeta):
             current_attention_layer = getattr(self.model, current_attention_layer_name)
 
             if current_index == 0:
-                previous_activation = img_
+                previous_activation = self.img_
             else:
-                previous_activation = activations[current_index - 1]
+                previous_activation = self.current_activations[current_index - 1]
 
             if isinstance(current_attention_layer, tn.TraceableNode):
                 current_activation = self.inverse_traceable_node(current_attention_layer,
@@ -128,9 +106,9 @@ class BackwardNetBase(metaclass=ABCMeta):
                 break
 
             # check shape of current_activation
-            if current_activation.shape != activations[current_index].shape:
+            if current_activation.shape != self.current_activations[current_index].shape:
                 raise ValueError('Shape of forward and backward were mismatched. '
-                                 f'forward: {activations[current_index].shape}, '
+                                 f'forward: {self.current_activations[current_index].shape}, '
                                  f'backward: {current_activation.shape}')
 
         return current_activation
