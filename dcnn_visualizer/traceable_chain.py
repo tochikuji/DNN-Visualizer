@@ -5,6 +5,29 @@ from chainercv.links import PickableSequentialChain
 
 
 class TraceableChain(PickableSequentialChain):
+    """
+    A traceable chain that can pick all intermediate layers and backtrace the calculation chains.
+
+    The forward propagation must be sequential,
+    that means forward propagation can be written as a composite of callable objects.
+
+    >>> class MLP(TraceableChain):
+    ...     def __init__(self):
+    ...         with self.init_scope():
+    ...             self.fc1 = L.Linear(None, 100)
+    ...             self.fc1_relu = F.relu
+    ...             self.fc2 = L.Linear(None, 10)
+    ...             self.fc2_relu = F.relu
+    ...             self.fc3 = L.Linear(None, 10)
+    ...             self.fc3_pred = F.softmax
+
+    The instance of TraceableChain is callable. Its `__call__` performs as a forward propagation.
+    All intermediate activations will be retained automatically, and picked with `pick`, e.g.,
+
+    >>> y = model(x)
+    >>> act_fc2 = model.pick('fc2')
+    """
+
     def __init__(self):
         super().__init__()
 

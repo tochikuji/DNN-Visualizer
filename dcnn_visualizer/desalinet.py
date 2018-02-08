@@ -1,5 +1,5 @@
 """
-Implementation of Machendran's DeSaliNet[1] including Zeiler's deconvolutional visualizing method (DeconvNet)[2],
+Implementation of Machendran's DeSaliNet[1], including Zeiler's deconvolutional visualizing method (DeconvNet)[2],
 and Simonyan's Network saliency (SaliNet)[3] as a special case.
 This method is based on the back-propagation of the network activation similar to Zeiler's one.
 DeSaliNet has a explicitness on its visualization result but sometimes provide a propitious visualization to excess.
@@ -36,9 +36,8 @@ class BackwardNetBase(metaclass=ABCMeta):
     """
     def __init__(self, model: TraceableChain):
         """
-
         Args:
-            model:
+            model(TraceableChain): model to visualize
         """
 
         if not isinstance(model, TraceableChain):
@@ -54,6 +53,21 @@ class BackwardNetBase(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def analyze(self, img, layer, index=None, verbose=False):
+        '''
+        Visualize a neuronal activation in feature maps.
+        Forward propagation will automatically be calculated and cached.
+
+        Args:
+            img (numpy.ndarray, cupy.ndarray): input images to visualize. It is expected that the shape is BCHW;
+            layer (str): attention layer name in the model
+            index (int, optional): index of a neuron in the specified layer.
+                Defaults to None that means that the entire of layer activation will be visualized.
+            verbose (bool, optional): If True, the method will be verbose.
+
+        Returns:
+            numpy.ndarray: visualization result which has the same shape of input (`img`)
+
+        '''
         # validate layer's name
         if layer not in self.layers:
             raise ValueError(f'specified layer "{layer}" is not pickable in the model.')
