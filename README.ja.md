@@ -2,8 +2,10 @@
 畳み込みニューラルネットワークの特徴表現を可視化するやつ。  
 chainerで動く。
 
-ここに画像がはいる
+![vis](https://user-images.githubusercontent.com/851759/36014547-d6bc7520-0dad-11e8-93ad-c87adc058bb0.png)
 
+*ILSVRC2012 datasetで学習されたAlexNetのConv4層, 10番目のフィルタの可視化結果;*  
+*左上: 入力(かわいい), 右上: DeconvNet, 左下: SaliNet, 右下: DeSaliNet*
 
 ## Introduction
 深層畳み込みニューラルネットワーク(DCNN)における種々の特徴表現の可視化手法を実装したライブラリです。  
@@ -70,7 +72,7 @@ print({layers[i]: y for i, y in enumerate(v)})
 
 活性マップの逆伝搬による勾配ベースの可視化手法です。  
 
-ここにずがはいる
+![desali](https://user-images.githubusercontent.com/851759/36014667-567b7b6c-0dae-11e8-9631-265e46e86fac.png)
 
 ベースはDeSaliNet[1]で、原論文と同様に $ReLU^{\dagger}$ の対応でZeiler et al. [3], Simonyan et al. [2]の
 可視化手法も実装しています。  
