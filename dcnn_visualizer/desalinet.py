@@ -158,7 +158,7 @@ class DeSaliNet(BackwardNetBase):
         elif isinstance(node, tn.TraceableMaxPooling2D):
             return self.unpooling_fun(node, traced, raw)
         elif isinstance(node, tn.TraceableReLU):
-            return bf.relu(bf.inverse_relu_anew(node, traced, raw))
+            return bf.relu(bf.inverse_relu_locational(node, traced, raw))
         elif isinstance(node, tn.TraceableLinear):
             return bf.inverse_linear(node, traced, raw)
 
