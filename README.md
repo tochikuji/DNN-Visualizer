@@ -1,5 +1,9 @@
 # DNN-Visualizer
 
+#### For Japanese people
+
+日本語のREADMEは `README.ja.md` にあります。
+
 ## Description
 
 Implementations of DCNN activation visualizing methods with chainer DNN framework.
