@@ -1,6 +1,6 @@
 # DNN-Visualizer
 
-#### For Japanese people
+#### For Japanese
 
 日本語のREADMEは `README.ja.md` にあります。
 
